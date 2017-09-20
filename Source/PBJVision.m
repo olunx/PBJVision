@@ -182,6 +182,8 @@ typedef NS_ENUM(GLint, PBJVisionUniformLocationTypes)
         unsigned int defaultVideoThumbnails:1;
         unsigned int videoCaptureFrame:1;
     } __block _flags;
+    
+    NSInteger exifOrientation;
 }
 
 @property (nonatomic) AVCaptureDevice *currentDevice;
@@ -227,6 +229,8 @@ typedef NS_ENUM(GLint, PBJVisionUniformLocationTypes)
     });
     return singleton;
 }
+
+
 
 #pragma mark - getters/setters
 
@@ -1500,8 +1504,14 @@ typedef void (^PBJVisionBlock)();
                     // set orientation
                     CFNumberRef orientationProperty = CFDictionaryGetValue(properties, kCGImagePropertyOrientation);
                     if (orientationProperty) {
-                        NSInteger exifOrientation = 1;
-                        CFNumberGetValue(orientationProperty, kCFNumberIntType, &exifOrientation);
+//                        NSInteger exifOrientation = _previewOrientation;
+//                        NSLog(@"%ld", (long)_previewOrientation);
+//                        CFNumberGetValue(orientationProperty, kCFNumberIntType, &exifOrientation);
+                        if (exifOrientation == 0){
+                            exifOrientation = 6;
+                        }else if (exifOrientation == 2){
+                            exifOrientation = 1;
+                        }
                         imageOrientation = [self _imageOrientationFromExifOrientation:exifOrientation];
                     }
                     
@@ -1713,8 +1723,9 @@ typedef void (^PBJVisionBlock)();
     }];
 }
 
-- (void)capturePhoto
+- (void)capturePhoto:(long)orientation
 {
+    exifOrientation = orientation;
     if (![self _canSessionCaptureWithOutput:_currentOutput] || _cameraMode != PBJCameraModePhoto) {
         [self _failPhotoCaptureWithErrorCode:PBJVisionErrorSessionFailed];
         DLog(@"session is not setup properly for capture");
